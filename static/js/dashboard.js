@@ -61,6 +61,23 @@ function updateDashboard(data) {
     updateAssetGrid(data.servers);
     updateAlertsList(data.alerts);
     updateActivityFeed(data);
+    setupClickHandlers();
+}
+
+// ===================================
+// Setup Click Handlers
+// ===================================
+
+function setupClickHandlers() {
+    // Make the Critical Alerts tile clickable
+    const alertsTile = document.getElementById('active-alerts');
+    if (alertsTile && alertsTile.parentElement && alertsTile.parentElement.parentElement) {
+        const tile = alertsTile.parentElement.parentElement;
+        tile.style.cursor = 'pointer';
+        tile.onclick = () => {
+            window.location.href = '/events';
+        };
+    }
 }
 
 // ===================================
@@ -364,7 +381,8 @@ function updateAlertsList(alerts) {
 
 function createAlertEntry(alert) {
     const div = document.createElement('div');
-    div.className = `alert-entry ${alert.severity}`;
+    div.className = `alert-entry ${alert.severity} clickable`;
+    div.style.cursor = 'pointer';
 
     const icon = alert.severity === 'critical' ? '🔴' : '⚠️';
 
@@ -379,7 +397,14 @@ function createAlertEntry(alert) {
             </div>
             <div class="alert-entry-time">${alert.timestamp}</div>
         </div>
+        <div class="alert-entry-action">→</div>
     `;
+
+    // Add click handler to navigate to events page
+    div.addEventListener('click', () => {
+        // Navigate to events page
+        window.location.href = '/events';
+    });
 
     return div;
 }

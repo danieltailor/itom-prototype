@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: ITOM JSON API
+    type: simpod-json-datasource
+    access: proxy
+    url: http://host.docker.internal:5000
+    isDefault: true
+    jsonData:
+      httpMethod: GET
+    editable: true

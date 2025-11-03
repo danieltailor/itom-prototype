@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO, emit
+from flask_cors import CORS
 import random
 import threading
 import time
@@ -8,6 +9,7 @@ import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'itom-demo-secret'
+CORS(app)  # Enable CORS for Grafana integration
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Infrastructure components to monitor
@@ -232,6 +234,160 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Client disconnected')
+
+# ===================================
+# Grafana Integration API Endpoints
+# ===================================
+
+@app.route('/grafana/health', methods=['GET'])
+def grafana_health():
+    """Health check endpoint for Grafana"""
+    return jsonify({'status': 'ok'})
+
+@app.route('/grafana/search', methods=['POST'])
+def grafana_search():
+    """Return available metrics for Grafana"""
+    metrics = [
+        'cpu_usage',
+        'memory_usage',
+        'disk_usage',
+        'network_traffic',
+        'alerts_count',
+        'events_count',
+        'critical_alerts',
+        'health_score'
+    ]
+    return jsonify(metrics)
+
+@app.route('/grafana/query', methods=['POST'])
+def grafana_query():
+    """Query endpoint for Grafana time series data"""
+    req = request.json
+    targets = req.get('targets', [])
+    time_range = req.get('range', {})
+
+    results = []
+
+    for target in targets:
+        metric_name = target.get('target', '')
+
+        if metric_name in ['cpu_usage', 'memory_usage', 'disk_usage', 'network_traffic']:
+            # Generate time series data for resource metrics
+            datapoints = []
+            data = generate_monitoring_data()
+
+            for server in data['servers']:
+                value = server['metrics'].get(metric_name, 0)
+                timestamp = int(datetime.now().timestamp() * 1000)
+                datapoints.append([value, timestamp])
+
+            results.append({
+                'target': metric_name,
+                'datapoints': datapoints
+            })
+
+        elif metric_name == 'alerts_count':
+            timestamp = int(datetime.now().timestamp() * 1000)
+            results.append({
+                'target': 'alerts_count',
+                'datapoints': [[len(recent_alerts), timestamp]]
+            })
+
+        elif metric_name == 'events_count':
+            timestamp = int(datetime.now().timestamp() * 1000)
+            results.append({
+                'target': 'events_count',
+                'datapoints': [[len(events), timestamp]]
+            })
+
+        elif metric_name == 'critical_alerts':
+            timestamp = int(datetime.now().timestamp() * 1000)
+            critical_count = len([a for a in recent_alerts if a['severity'] == 'critical'])
+            results.append({
+                'target': 'critical_alerts',
+                'datapoints': [[critical_count, timestamp]]
+            })
+
+        elif metric_name == 'health_score':
+            timestamp = int(datetime.now().timestamp() * 1000)
+            # Calculate average health score
+            data = generate_monitoring_data()
+            total_score = 0
+            for server in data['servers']:
+                score = 100
+                metrics = server['metrics']
+                if metrics.get('cpu_usage', 0) > 80: score -= 20
+                if metrics.get('memory_usage', 0) > 85: score -= 20
+                if metrics.get('disk_usage', 0) > 90: score -= 20
+                total_score += max(score, 0)
+
+            avg_score = total_score / len(data['servers']) if data['servers'] else 100
+            results.append({
+                'target': 'health_score',
+                'datapoints': [[avg_score, timestamp]]
+            })
+
+    return jsonify(results)
+
+@app.route('/grafana/annotations', methods=['POST'])
+def grafana_annotations():
+    """Return annotations (alerts/events) for Grafana"""
+    req = request.json
+    annotations = []
+
+    # Add recent alerts as annotations
+    for alert in recent_alerts[:10]:
+        try:
+            alert_time = datetime.strptime(alert['timestamp'], '%Y-%m-%d %H:%M:%S')
+            annotations.append({
+                'annotation': 'alerts',
+                'time': int(alert_time.timestamp() * 1000),
+                'title': f"{alert['server']} - {alert['metric']}",
+                'tags': [alert['severity'], alert['server']],
+                'text': f"{alert['metric']} at {alert['value']:.1f}% (threshold: {alert['threshold']}%)"
+            })
+        except:
+            pass
+
+    return jsonify(annotations)
+
+@app.route('/grafana/metrics', methods=['GET'])
+def grafana_metrics():
+    """Return current metrics in Prometheus-like format for Grafana"""
+    data = generate_monitoring_data()
+    metrics = []
+
+    for server in data['servers']:
+        server_name = server['name']
+        for metric, value in server['metrics'].items():
+            metrics.append({
+                'metric': metric,
+                'server': server_name,
+                'value': value,
+                'timestamp': datetime.now().isoformat()
+            })
+
+    # Add aggregate metrics
+    metrics.append({
+        'metric': 'total_alerts',
+        'value': len(recent_alerts),
+        'timestamp': datetime.now().isoformat()
+    })
+
+    metrics.append({
+        'metric': 'total_events',
+        'value': len(events),
+        'timestamp': datetime.now().isoformat()
+    })
+
+    critical_alerts = len([a for a in recent_alerts if a['severity'] == 'critical'])
+    metrics.append({
+        'metric': 'critical_alerts',
+        'value': critical_alerts,
+        'timestamp': datetime.now().isoformat()
+    })
+
+    return jsonify(metrics)
 
 if __name__ == '__main__':
     # Start background data generation thread

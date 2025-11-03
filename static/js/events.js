@@ -50,6 +50,11 @@ function loadEvents() {
         .then(events => {
             allEvents = events;
             updateStats(events);
+            // Apply URL filters if present (only on first load)
+            if (!window.filtersApplied) {
+                applyUrlFilters();
+                window.filtersApplied = true;
+            }
             filterEvents();
         })
         .catch(error => {
@@ -70,6 +75,89 @@ function updateStats(events) {
     document.getElementById('resolved-events').textContent = resolvedCount;
 }
 
+// Get URL parameters
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        severity: params.get('severity'),
+        status: params.get('status'),
+        priority: params.get('priority')
+    };
+}
+
+// Apply URL parameters to filters
+function applyUrlFilters() {
+    const params = getUrlParams();
+
+    if (params.severity) {
+        document.getElementById('filter-severity').value = params.severity;
+    }
+
+    if (params.status) {
+        // Map 'unresolved' to filter for new and in-progress events
+        if (params.status === 'unresolved') {
+            document.getElementById('filter-status').value = '';
+        } else {
+            document.getElementById('filter-status').value = params.status;
+        }
+    }
+
+    if (params.priority) {
+        document.getElementById('filter-priority').value = params.priority;
+    }
+
+    // Show filter info banner
+    updateFilterInfoBanner(params);
+}
+
+// Update filter info banner
+function updateFilterInfoBanner(params) {
+    const banner = document.getElementById('filter-info-banner');
+    const bannerText = document.getElementById('filter-info-text');
+
+    if (!params) {
+        params = getUrlParams();
+    }
+
+    // Check if any filters are active
+    if (params.severity || params.status || params.priority) {
+        let filterText = 'Active Filters: ';
+        const filters = [];
+
+        if (params.severity) {
+            filters.push(`Severity: ${params.severity.charAt(0).toUpperCase() + params.severity.slice(1)}`);
+        }
+
+        if (params.status === 'unresolved') {
+            filters.push('Status: Unresolved (New & In Progress)');
+        } else if (params.status) {
+            filters.push(`Status: ${params.status.charAt(0).toUpperCase() + params.status.slice(1)}`);
+        }
+
+        if (params.priority) {
+            filters.push(`Priority: ${params.priority.charAt(0).toUpperCase() + params.priority.slice(1)}`);
+        }
+
+        filterText += filters.join(' | ');
+        bannerText.textContent = filterText;
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
+}
+
+// Clear all filters
+function clearFilters() {
+    // Clear dropdown values
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-severity').value = '';
+    document.getElementById('filter-priority').value = '';
+    document.getElementById('search-box').value = '';
+
+    // Remove URL parameters and reload
+    window.location.href = '/events';
+}
+
 // Filter events based on filters and search
 function filterEvents() {
     const statusFilter = document.getElementById('filter-status').value;
@@ -77,9 +165,18 @@ function filterEvents() {
     const priorityFilter = document.getElementById('filter-priority').value;
     const searchText = document.getElementById('search-box').value.toLowerCase();
 
+    // Check if we need to filter for unresolved (from URL)
+    const params = getUrlParams();
+    const unresolvedFilter = params.status === 'unresolved';
+
     let filtered = allEvents.filter(event => {
         // Status filter
-        if (statusFilter && event.status !== statusFilter) return false;
+        if (unresolvedFilter) {
+            // Unresolved means not 'resolved' and not 'closed'
+            if (event.status === 'resolved' || event.status === 'closed') return false;
+        } else if (statusFilter && event.status !== statusFilter) {
+            return false;
+        }
 
         // Severity filter
         if (severityFilter && event.severity !== severityFilter) return false;

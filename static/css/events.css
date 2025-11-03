@@ -72,6 +72,56 @@
     border: 1px solid #e0e0e0;
 }
 
+/* Filter Info Banner */
+.filter-info-banner {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 12px 32px;
+    margin: 0 32px 20px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 2px;
+    animation: slideDown 0.3s ease;
+}
+
+.filter-info-banner.hidden {
+    display: none;
+}
+
+.filter-info-banner #filter-info-text {
+    font-size: 13px;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.clear-filters-btn {
+    padding: 6px 14px;
+    background: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.clear-filters-btn:hover {
+    background: #1976d2;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .stat-item {
     display: flex;
     flex-direction: column;

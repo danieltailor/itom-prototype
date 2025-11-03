@@ -75,7 +75,8 @@ function setupClickHandlers() {
         const tile = alertsTile.parentElement.parentElement;
         tile.style.cursor = 'pointer';
         tile.onclick = () => {
-            window.location.href = '/events';
+            // Navigate to events page with critical and unresolved filters
+            window.location.href = '/events?severity=critical&status=unresolved';
         };
     }
 }

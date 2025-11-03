@@ -3,67 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ITOM Dashboard - Infrastructure Monitoring</title>
+    <title>ITOM Dashboard - IT Operations Management</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <h1>🖥️ ITOM Dashboard</h1>
-            <div class="header-info">
-                <a href="/events" class="nav-link">Event Manager</a>
-                <span id="last-update">Last Update: --</span>
-                <span class="status-indicator" id="connection-status">● Connected</span>
+    <div class="ivanti-container">
+        <!-- Navigation Sidebar -->
+        <aside class="ivanti-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ITOM</div>
+                <div class="platform-name">Operations Center</div>
             </div>
-        </header>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="/events" class="nav-item">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-text">Events</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">💻</span>
+                    <span class="nav-text">Assets</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Configuration</span>
+                </a>
+            </nav>
+        </aside>
 
-        <!-- Alert Banner -->
-        <div id="alert-banner" class="alert-banner hidden">
-            <span id="alert-message"></span>
-            <button onclick="dismissAlert()">×</button>
-        </div>
+        <!-- Main Content -->
+        <div class="ivanti-main">
+            <!-- Top Bar -->
+            <header class="ivanti-header">
+                <div class="header-left">
+                    <h1 class="page-title">IT Operations Dashboard</h1>
+                    <div class="breadcrumb">
+                        <span>Home</span> / <span class="active">Dashboard</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-control">
+                        <label>View:</label>
+                        <select id="view-filter" class="filter-select">
+                            <option>All Devices</option>
+                            <option>Critical Only</option>
+                            <option>Healthy Only</option>
+                        </select>
+                    </div>
+                    <div class="header-control">
+                        <label>Refresh:</label>
+                        <select id="refresh-interval" class="filter-select">
+                            <option value="30">30 seconds</option>
+                            <option value="60">1 minute</option>
+                            <option value="300">5 minutes</option>
+                        </select>
+                    </div>
+                    <div class="connection-badge">
+                        <span class="status-dot" id="connection-dot"></span>
+                        <span id="connection-status">Connected</span>
+                    </div>
+                    <div class="last-update-time" id="last-update">Updated: --</div>
+                </div>
+            </header>
 
-        <!-- Stats Overview -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">Total Laptops</div>
-                <div class="stat-value" id="total-servers">5</div>
-                <div class="stat-status online">All Online</div>
+            <!-- Alert Banner -->
+            <div id="alert-banner" class="ivanti-alert-banner hidden">
+                <div class="banner-content">
+                    <span class="banner-icon">⚠️</span>
+                    <span id="alert-message"></span>
+                </div>
+                <button class="banner-close" onclick="dismissAlert()">×</button>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Active Alerts</div>
-                <div class="stat-value" id="active-alerts">0</div>
-                <div class="stat-status" id="alert-status">No Issues</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Avg CPU Usage</div>
-                <div class="stat-value" id="avg-cpu">--</div>
-                <div class="stat-status">Across All Laptops</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Avg Memory Usage</div>
-                <div class="stat-value" id="avg-memory">--</div>
-                <div class="stat-status">Across All Laptops</div>
-            </div>
-        </div>
 
-        <!-- Laptop Monitoring Grid -->
-        <div class="section">
-            <h2>Laptop Monitoring</h2>
-            <div id="servers-grid" class="servers-grid">
-                <!-- Laptop cards will be dynamically populated -->
-            </div>
-        </div>
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Key Metrics Row -->
+                <div class="metrics-row">
+                    <div class="metric-tile">
+                        <div class="tile-icon blue">💻</div>
+                        <div class="tile-content">
+                            <div class="tile-label">Total Assets</div>
+                            <div class="tile-value" id="total-servers">5</div>
+                            <div class="tile-trend positive" id="assets-trend">
+                                <span class="trend-icon">↑</span>
+                                <span>All Online</span>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Alerts Section -->
-        <div class="section">
-            <h2>Recent Alerts</h2>
-            <div id="alerts-container" class="alerts-container">
-                <p class="no-alerts">No alerts to display</p>
+                    <div class="metric-tile">
+                        <div class="tile-icon red">🚨</div>
+                        <div class="tile-content">
+                            <div class="tile-label">Critical Alerts</div>
+                            <div class="tile-value" id="active-alerts">0</div>
+                            <div class="tile-trend" id="alert-trend">
+                                <span class="trend-text" id="alert-status">No Issues</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-tile">
+                        <div class="tile-icon green">✓</div>
+                        <div class="tile-content">
+                            <div class="tile-label">System Health</div>
+                            <div class="tile-value" id="health-score">98%</div>
+                            <div class="tile-trend positive">
+                                <span class="trend-icon">↑</span>
+                                <span>Excellent</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-tile">
+                        <div class="tile-icon orange">📊</div>
+                        <div class="tile-content">
+                            <div class="tile-label">Avg Response Time</div>
+                            <div class="tile-value" id="response-time">45ms</div>
+                            <div class="tile-trend positive">
+                                <span class="trend-icon">↓</span>
+                                <span>Optimal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resource Utilization Overview -->
+                <div class="dashboard-row">
+                    <div class="dashboard-widget wide">
+                        <div class="widget-header">
+                            <h3>Resource Utilization Overview</h3>
+                            <div class="widget-actions">
+                                <button class="widget-btn">⟳</button>
+                                <button class="widget-btn">⋮</button>
+                            </div>
+                        </div>
+                        <div class="widget-content">
+                            <div class="resource-metrics">
+                                <div class="resource-item">
+                                    <div class="resource-header">
+                                        <span class="resource-label">CPU Utilization</span>
+                                        <span class="resource-value" id="avg-cpu">--</span>
+                                    </div>
+                                    <div class="resource-bar-container">
+                                        <div class="resource-bar" id="cpu-bar"></div>
+                                    </div>
+                                    <div class="resource-footer">Across all monitored assets</div>
+                                </div>
+
+                                <div class="resource-item">
+                                    <div class="resource-header">
+                                        <span class="resource-label">Memory Usage</span>
+                                        <span class="resource-value" id="avg-memory">--</span>
+                                    </div>
+                                    <div class="resource-bar-container">
+                                        <div class="resource-bar" id="memory-bar"></div>
+                                    </div>
+                                    <div class="resource-footer">Across all monitored assets</div>
+                                </div>
+
+                                <div class="resource-item">
+                                    <div class="resource-header">
+                                        <span class="resource-label">Disk Usage</span>
+                                        <span class="resource-value" id="avg-disk">--</span>
+                                    </div>
+                                    <div class="resource-bar-container">
+                                        <div class="resource-bar" id="disk-bar"></div>
+                                    </div>
+                                    <div class="resource-footer">Across all monitored assets</div>
+                                </div>
+
+                                <div class="resource-item">
+                                    <div class="resource-header">
+                                        <span class="resource-label">Network Traffic</span>
+                                        <span class="resource-value" id="avg-network">--</span>
+                                    </div>
+                                    <div class="resource-bar-container">
+                                        <div class="resource-bar" id="network-bar"></div>
+                                    </div>
+                                    <div class="resource-footer">Across all monitored assets</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-widget">
+                        <div class="widget-header">
+                            <h3>Status Summary</h3>
+                        </div>
+                        <div class="widget-content">
+                            <div class="status-chart">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                            <div class="status-legend">
+                                <div class="legend-item">
+                                    <span class="legend-dot healthy"></span>
+                                    <span>Healthy: <strong id="healthy-count">0</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot warning"></span>
+                                    <span>Warning: <strong id="warning-count">0</strong></span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot critical"></span>
+                                    <span>Critical: <strong id="critical-count">0</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Asset Monitoring -->
+                <div class="dashboard-widget full">
+                    <div class="widget-header">
+                        <h3>Asset Monitoring</h3>
+                        <div class="widget-filters">
+                            <input type="text" placeholder="Search assets..." class="search-input" id="asset-search">
+                            <button class="filter-btn">Filter</button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div id="servers-grid" class="asset-grid">
+                            <!-- Asset cards will be dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="dashboard-row">
+                    <div class="dashboard-widget">
+                        <div class="widget-header">
+                            <h3>Recent Alerts</h3>
+                            <a href="/events" class="view-all-link">View All →</a>
+                        </div>
+                        <div class="widget-content">
+                            <div id="alerts-container" class="alerts-list">
+                                <p class="no-data">No alerts to display</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-widget">
+                        <div class="widget-header">
+                            <h3>Recent Activity</h3>
+                        </div>
+                        <div class="widget-content">
+                            <div id="activity-feed" class="activity-list">
+                                <div class="activity-item">
+                                    <span class="activity-icon">🔄</span>
+                                    <div class="activity-content">
+                                        <div class="activity-text">System monitoring started</div>
+                                        <div class="activity-time">Just now</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

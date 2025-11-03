@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - ITOM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+</head>
+<body>
+    <div class="ivanti-container">
+        <!-- Navigation Sidebar -->
+        <aside class="ivanti-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ITOM</div>
+                <div class="platform-name">Operations Center</div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="/events" class="nav-item">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-text">Events</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">💻</span>
+                    <span class="nav-text">Assets</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/settings" class="nav-item active">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="ivanti-main">
+            <!-- Top Bar -->
+            <header class="ivanti-header">
+                <div class="header-left">
+                    <h1 class="page-title">Settings</h1>
+                    <div class="breadcrumb">
+                        <span>Home</span> / <span class="active">Settings</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <a href="/" class="btn-dashboard">Back to Dashboard</a>
+                </div>
+            </header>
+
+            <!-- Success/Error Messages -->
+            <div id="message-banner" class="message-banner hidden">
+                <span id="message-text"></span>
+                <button class="message-close" onclick="dismissMessage()">×</button>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="settings-content">
+                <!-- Grafana Integration Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Grafana Integration</h2>
+                        <span class="status-badge" id="grafana-status">Not Connected</span>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3>API Configuration</h3>
+                            <p class="card-description">Connect your ITOM dashboard with Grafana using an API key for advanced monitoring and visualization.</p>
+                        </div>
+
+                        <div class="card-body">
+                            <form id="grafana-config-form">
+                                <div class="form-group">
+                                    <label for="grafana-url">Grafana URL</label>
+                                    <input type="text" id="grafana-url" placeholder="http://localhost:3000" value="http://localhost:3000">
+                                    <small class="form-hint">Enter the full URL of your Grafana instance</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="grafana-api-key">API Key</label>
+                                    <div class="input-with-button">
+                                        <input type="password" id="grafana-api-key" placeholder="Enter your Grafana API key">
+                                        <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility()">👁️</button>
+                                    </div>
+                                    <small class="form-hint">Generate an API key in Grafana: Configuration → API Keys → Add API key</small>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="testConnection()">Test Connection</button>
+                                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Connection Status Card -->
+                    <div class="settings-card" id="connection-status-card" style="display: none;">
+                        <div class="card-header">
+                            <h3>Connection Status</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="status-info">
+                                <div class="status-item">
+                                    <span class="status-label">Status:</span>
+                                    <span class="status-value" id="connection-status-text">Unknown</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Grafana Version:</span>
+                                    <span class="status-value" id="grafana-version">-</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Organization:</span>
+                                    <span class="status-value" id="grafana-org">-</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Last Tested:</span>
+                                    <span class="status-value" id="last-tested">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features Card -->
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3>Available Features</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="features-list">
+                                <div class="feature-item">
+                                    <span class="feature-icon">✓</span>
+                                    <div class="feature-content">
+                                        <strong>Real-time Metrics Sync</strong>
+                                        <p>Automatically sync ITOM metrics to Grafana dashboards</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">✓</span>
+                                    <div class="feature-content">
+                                        <strong>Alert Annotations</strong>
+                                        <p>Display ITOM alerts as annotations on Grafana graphs</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">✓</span>
+                                    <div class="feature-content">
+                                        <strong>Custom Dashboards</strong>
+                                        <p>Create and manage Grafana dashboards directly from ITOM</p>
+                                    </div>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="feature-icon">✓</span>
+                                    <div class="feature-content">
+                                        <strong>Historical Data</strong>
+                                        <p>Query and visualize historical monitoring data</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <h2>Quick Actions</h2>
+                    </div>
+
+                    <div class="quick-actions-grid">
+                        <div class="action-card">
+                            <div class="action-icon">📊</div>
+                            <h4>Open Grafana</h4>
+                            <p>Open Grafana in a new tab</p>
+                            <button class="btn btn-secondary" onclick="openGrafana()">Open</button>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-icon">🔑</div>
+                            <h4>Generate API Key</h4>
+                            <p>Learn how to create a Grafana API key</p>
+                            <button class="btn btn-secondary" onclick="showAPIKeyHelp()">Learn More</button>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-icon">📖</div>
+                            <h4>Documentation</h4>
+                            <p>View Grafana setup guide</p>
+                            <button class="btn btn-secondary" onclick="openDocumentation()">View Guide</button>
+                        </div>
+
+                        <div class="action-card">
+                            <div class="action-icon">🔄</div>
+                            <h4>Reset Configuration</h4>
+                            <p>Clear all Grafana settings</p>
+                            <button class="btn btn-danger" onclick="resetConfiguration()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Help Modal -->
+    <div id="api-key-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>How to Generate a Grafana API Key</h2>
+                <button class="modal-close" onclick="closeAPIKeyModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-steps">
+                    <div class="help-step">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <h4>Login to Grafana</h4>
+                            <p>Open Grafana at <code>http://localhost:3000</code> and login with your credentials (default: admin/admin)</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <h4>Navigate to API Keys</h4>
+                            <p>Click on the gear icon (⚙️) → Configuration → API Keys</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <h4>Create New API Key</h4>
+                            <p>Click "Add API key" button</p>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <span class="step-number">4</span>
+                        <div class="step-content">
+                            <h4>Configure Key Settings</h4>
+                            <ul>
+                                <li>Key name: <code>ITOM Integration</code></li>
+                                <li>Role: <code>Admin</code> (required for full integration)</li>
+                                <li>Time to live: Choose based on your security policy</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="help-step">
+                        <span class="step-number">5</span>
+                        <div class="step-content">
+                            <h4>Copy the API Key</h4>
+                            <p>Copy the generated API key immediately (it won't be shown again!) and paste it in the settings above</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeAPIKeyModal()">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+</body>
+</html>

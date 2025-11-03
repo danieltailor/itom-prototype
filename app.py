@@ -6,11 +6,20 @@ import threading
 import time
 from datetime import datetime
 import uuid
+import requests
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'itom-demo-secret'
 CORS(app)  # Enable CORS for Grafana integration
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Store Grafana settings (in-memory for demo, should be in DB/config file for production)
+grafana_settings = {
+    'url': '',
+    'api_key': '',
+    'connected': False
+}
 
 # Infrastructure components to monitor
 SERVERS = ['laptop-01', 'laptop-02', 'laptop-03', 'laptop-04', 'laptop-05']
@@ -134,6 +143,10 @@ def index():
 @app.route('/events')
 def events_page():
     return render_template('events.html')
+
+@app.route('/settings')
+def settings_page():
+    return render_template('settings.html')
 
 @app.route('/api/current-data')
 def get_current_data():
@@ -388,6 +401,144 @@ def grafana_metrics():
     })
 
     return jsonify(metrics)
+
+# ===================================
+# Settings API Endpoints
+# ===================================
+
+@app.route('/api/settings/grafana', methods=['GET'])
+def get_grafana_settings():
+    """Get current Grafana settings (without exposing full API key)"""
+    return jsonify({
+        'url': grafana_settings.get('url', ''),
+        'api_key': grafana_settings.get('api_key', ''),  # In production, return masked key
+        'connected': grafana_settings.get('connected', False)
+    })
+
+@app.route('/api/settings/grafana', methods=['POST'])
+def save_grafana_settings():
+    """Save Grafana settings"""
+    try:
+        data = request.json
+        grafana_settings['url'] = data.get('url', '')
+        grafana_settings['api_key'] = data.get('api_key', '')
+
+        # In production, save to database or config file
+        # For now, just store in memory
+
+        return jsonify({
+            'success': True,
+            'message': 'Settings saved successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/settings/grafana/test', methods=['POST'])
+def test_grafana_connection():
+    """Test Grafana API connection"""
+    try:
+        data = request.json
+        url = data.get('url', '').rstrip('/')
+        api_key = data.get('api_key', '')
+
+        if not url or not api_key:
+            return jsonify({
+                'success': False,
+                'error': 'URL and API key are required'
+            }), 400
+
+        # Test connection by calling Grafana health endpoint
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        # Try to get Grafana instance info
+        response = requests.get(
+            f'{url}/api/health',
+            headers=headers,
+            timeout=5
+        )
+
+        if response.status_code == 200:
+            # Get additional info
+            try:
+                info_response = requests.get(
+                    f'{url}/api/org',
+                    headers=headers,
+                    timeout=5
+                )
+
+                org_info = info_response.json() if info_response.status_code == 200 else {}
+
+                # Update connection status
+                grafana_settings['connected'] = True
+
+                return jsonify({
+                    'success': True,
+                    'message': 'Connection successful',
+                    'info': {
+                        'version': response.json().get('version', 'Unknown'),
+                        'org': org_info.get('name', 'Unknown')
+                    }
+                })
+            except:
+                # Even if we can't get org info, health check passed
+                grafana_settings['connected'] = True
+                return jsonify({
+                    'success': True,
+                    'message': 'Connection successful',
+                    'info': {
+                        'version': response.json().get('version', 'Unknown'),
+                        'org': 'Unknown'
+                    }
+                })
+        else:
+            grafana_settings['connected'] = False
+            return jsonify({
+                'success': False,
+                'error': f'Grafana returned status code {response.status_code}'
+            }), 400
+
+    except requests.exceptions.ConnectionError:
+        grafana_settings['connected'] = False
+        return jsonify({
+            'success': False,
+            'error': 'Could not connect to Grafana. Please check the URL and ensure Grafana is running.'
+        }), 400
+    except requests.exceptions.Timeout:
+        grafana_settings['connected'] = False
+        return jsonify({
+            'success': False,
+            'error': 'Connection timed out. Please check the URL.'
+        }), 400
+    except Exception as e:
+        grafana_settings['connected'] = False
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/settings/grafana', methods=['DELETE'])
+def reset_grafana_settings():
+    """Reset Grafana settings"""
+    try:
+        grafana_settings['url'] = ''
+        grafana_settings['api_key'] = ''
+        grafana_settings['connected'] = False
+
+        return jsonify({
+            'success': True,
+            'message': 'Settings reset successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     # Start background data generation thread

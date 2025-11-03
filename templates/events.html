@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Manager - ITOM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <h1>📋 Event Manager</h1>
+            </div>
+            <div class="header-info">
+                <a href="/" class="nav-link">Dashboard</a>
+                <span class="status-indicator" id="connection-status">● Connected</span>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number" id="total-events">0</span>
+                <span class="stat-text">Total Events</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="new-events">0</span>
+                <span class="stat-text">New</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="in-progress-events">0</span>
+                <span class="stat-text">In Progress</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="resolved-events">0</span>
+                <span class="stat-text">Resolved</span>
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <div class="actions-left">
+                <button class="btn btn-primary" onclick="showCreateEventModal()">+ Create Event</button>
+                <div class="filter-group">
+                    <select id="filter-status" onchange="filterEvents()">
+                        <option value="">All Statuses</option>
+                        <option value="new">New</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <select id="filter-severity" onchange="filterEvents()">
+                        <option value="">All Severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="warning">Warning</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select id="filter-priority" onchange="filterEvents()">
+                        <option value="">All Priorities</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="actions-right">
+                <input type="text" id="search-box" placeholder="Search events..." onkeyup="filterEvents()">
+            </div>
+        </div>
+
+        <!-- Events Table -->
+        <div class="section">
+            <div class="table-container">
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Title</th>
+                            <th>Source</th>
+                            <th>Severity</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body">
+                        <tr>
+                            <td colspan="9" class="no-data">No events found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div id="create-event-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Event</h2>
+                <button class="modal-close" onclick="hideCreateEventModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-event-form">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" id="event-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea id="event-description" rows="3" required></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Source</label>
+                            <input type="text" id="event-source" value="Manual">
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select id="event-category">
+                                <option value="Performance">Performance</option>
+                                <option value="Availability">Availability</option>
+                                <option value="Security">Security</option>
+                                <option value="Configuration">Configuration</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Severity</label>
+                            <select id="event-severity">
+                                <option value="low">Low</option>
+                                <option value="warning">Warning</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="event-priority">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned To</label>
+                        <input type="text" id="event-assigned" value="Unassigned">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideCreateEventModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createEvent()">Create Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="event-details-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="event-detail-number">Event Details</h2>
+                <button class="modal-close" onclick="hideEventDetailsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-section">
+                    <h3>Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Title:</strong>
+                            <span id="detail-title"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Description:</strong>
+                            <span id="detail-description"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Source:</strong>
+                            <span id="detail-source"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Category:</strong>
+                            <span id="detail-category"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Severity:</strong>
+                            <span id="detail-severity"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Priority:</strong>
+                            <span id="detail-priority"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Status:</strong>
+                            <span id="detail-status"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Assigned To:</strong>
+                            <span id="detail-assigned"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Created:</strong>
+                            <span id="detail-created"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Updated:</strong>
+                            <span id="detail-updated"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Update Status</h3>
+                    <div class="form-row">
+                        <select id="update-status">
+                            <option value="new">New</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="updateEventStatus()">Update Status</button>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Notes</h3>
+                    <div id="notes-container" class="notes-container">
+                        <p class="no-notes">No notes yet</p>
+                    </div>
+                    <div class="add-note">
+                        <textarea id="new-note" placeholder="Add a note..." rows="2"></textarea>
+                        <button class="btn btn-primary" onclick="addNote()">Add Note</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="deleteEvent()">Delete Event</button>
+                <button class="btn btn-secondary" onclick="hideEventDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/events.js') }}"></script>
+</body>
+</html>

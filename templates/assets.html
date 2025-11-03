@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management - ITOM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/assets.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <h1>💼 Asset Management</h1>
+            </div>
+            <div class="header-info">
+                <a href="/" class="nav-link">Dashboard</a>
+                <a href="/events" class="nav-link">Events</a>
+            </div>
+        </header>
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <span class="breadcrumb-item">Home</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item">Asset Management</span>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item active">Asset Overview</span>
+        </div>
+
+        <!-- Page Title -->
+        <div class="page-title-section">
+            <h1 class="page-main-title">Asset Overview</h1>
+        </div>
+
+        <!-- Toolbar with Filters and Actions -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <input type="text" id="search-box" class="search-input" placeholder="Search..." onkeyup="filterAssets()">
+                <select id="filter-status" class="filter-select" onchange="filterAssets()">
+                    <option value="">All Statuses</option>
+                    <option value="In Use">In Use</option>
+                    <option value="Available">Available</option>
+                    <option value="In Maintenance">In Maintenance</option>
+                </select>
+                <select id="filter-brand" class="filter-select" onchange="filterAssets()">
+                    <option value="">All Brands</option>
+                    <option value="Dell">Dell</option>
+                    <option value="HP">HP</option>
+                    <option value="Lenovo">Lenovo</option>
+                </select>
+                <select id="filter-type" class="filter-select" onchange="filterAssets()">
+                    <option value="">All Types</option>
+                    <option value="Laptop">Laptop</option>
+                </select>
+            </div>
+            <div class="toolbar-right">
+                <span class="result-count">Total: <strong id="result-count">0</strong></span>
+            </div>
+        </div>
+
+        <!-- Assets Table -->
+        <div class="content-area">
+            <table class="topdesk-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="checkbox-header"></th>
+                        <th>Name</th>
+                        <th>Asset ID</th>
+                        <th>Type</th>
+                        <th>Brand</th>
+                        <th>Model</th>
+                        <th>Serial Number</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody id="assets-table-body">
+                    <tr>
+                        <td colspan="10" class="no-data">Loading assets...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Asset Details Modal -->
+    <div id="asset-details-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="asset-detail-id">Asset Details</h2>
+                <button class="modal-close" onclick="hideAssetDetailsModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-section">
+                    <h3>Basic Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Asset ID:</strong>
+                            <span id="detail-id"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Name:</strong>
+                            <span id="detail-name"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Type:</strong>
+                            <span id="detail-type"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Status:</strong>
+                            <span id="detail-status"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Hardware Details</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Brand:</strong>
+                            <span id="detail-brand"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Model:</strong>
+                            <span id="detail-model"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Serial Number:</strong>
+                            <span id="detail-serial"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Operating System:</strong>
+                            <span id="detail-os"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>IP Address:</strong>
+                            <span id="detail-ip"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Assignment & Location</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Location:</strong>
+                            <span id="detail-location"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Assigned To:</strong>
+                            <span id="detail-assigned"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>Purchase & Warranty</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Purchase Date:</strong>
+                            <span id="detail-purchase"></span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Warranty Expiry:</strong>
+                            <span id="detail-warranty"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideAssetDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/assets.js') }}"></script>
+</body>
+</html>

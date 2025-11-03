@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITOM Dashboard - Infrastructure Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/events.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🖥️ ITOM Dashboard</h1>
+            <div class="header-info">
+                <a href="/events" class="nav-link">Event Manager</a>
+                <span id="last-update">Last Update: --</span>
+                <span class="status-indicator" id="connection-status">● Connected</span>
+            </div>
+        </header>
+
+        <!-- Alert Banner -->
+        <div id="alert-banner" class="alert-banner hidden">
+            <span id="alert-message"></span>
+            <button onclick="dismissAlert()">×</button>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Laptops</div>
+                <div class="stat-value" id="total-servers">5</div>
+                <div class="stat-status online">All Online</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Alerts</div>
+                <div class="stat-value" id="active-alerts">0</div>
+                <div class="stat-status" id="alert-status">No Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg CPU Usage</div>
+                <div class="stat-value" id="avg-cpu">--</div>
+                <div class="stat-status">Across All Laptops</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Memory Usage</div>
+                <div class="stat-value" id="avg-memory">--</div>
+                <div class="stat-status">Across All Laptops</div>
+            </div>
+        </div>
+
+        <!-- Laptop Monitoring Grid -->
+        <div class="section">
+            <h2>Laptop Monitoring</h2>
+            <div id="servers-grid" class="servers-grid">
+                <!-- Laptop cards will be dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="section">
+            <h2>Recent Alerts</h2>
+            <div id="alerts-container" class="alerts-container">
+                <p class="no-alerts">No alerts to display</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

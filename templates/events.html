@@ -9,50 +9,112 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="header-left">
-                <a href="/" class="back-button">← Back to Dashboard</a>
-                <h1>📋 Event Manager</h1>
+    <div class="ivanti-container">
+        <!-- Navigation Sidebar -->
+        <aside class="ivanti-sidebar">
+            <div class="sidebar-header">
+                <div class="logo">ITOM</div>
+                <div class="platform-name">Operations Center</div>
             </div>
-            <div class="header-info">
-                <a href="/" class="btn-dashboard">Dashboard</a>
-                <span class="status-indicator" id="connection-status">● Connected</span>
-            </div>
-        </header>
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="/events" class="nav-item active">
+                    <span class="nav-icon">🔔</span>
+                    <span class="nav-text">Events</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">💻</span>
+                    <span class="nav-text">Assets</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/settings" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Settings</span>
+                </a>
+            </nav>
+        </aside>
 
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-number" id="total-events">0</span>
-                <span class="stat-text">Total Events</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="new-events">0</span>
-                <span class="stat-text">New</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="in-progress-events">0</span>
-                <span class="stat-text">In Progress</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="resolved-events">0</span>
-                <span class="stat-text">Resolved</span>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <div class="ivanti-main">
+            <!-- Top Bar -->
+            <header class="ivanti-header">
+                <div class="header-left">
+                    <h1 class="page-title">Event Manager</h1>
+                    <div class="breadcrumb">
+                        <span>Home</span> / <span class="active">Events</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="connection-badge">
+                        <span class="status-dot" id="connection-dot"></span>
+                        <span id="connection-status">Connected</span>
+                    </div>
+                </div>
+            </header>
 
-        <!-- Filter Info Banner -->
-        <div id="filter-info-banner" class="filter-info-banner hidden">
-            <span id="filter-info-text"></span>
-            <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
-        </div>
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
 
-        <!-- Actions Bar -->
-        <div class="actions-bar">
-            <div class="actions-left">
-                <button class="btn btn-primary" onclick="showCreateEventModal()">+ Create Event</button>
-                <div class="filter-group">
+                <!-- Stats Row -->
+                <div class="metrics-row">
+                    <div class="metric-tile">
+                        <div class="tile-icon blue">📊</div>
+                        <div class="tile-content">
+                            <div class="tile-label">Total Events</div>
+                            <div class="tile-value" id="total-events">0</div>
+                            <div class="tile-trend">All Time</div>
+                        </div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="tile-icon orange">🆕</div>
+                        <div class="tile-content">
+                            <div class="tile-label">New Events</div>
+                            <div class="tile-value" id="new-events">0</div>
+                            <div class="tile-trend">Unassigned</div>
+                        </div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="tile-icon blue">🔄</div>
+                        <div class="tile-content">
+                            <div class="tile-label">In Progress</div>
+                            <div class="tile-value" id="in-progress-events">0</div>
+                            <div class="tile-trend">Active</div>
+                        </div>
+                    </div>
+                    <div class="metric-tile">
+                        <div class="tile-icon green">✓</div>
+                        <div class="tile-content">
+                            <div class="tile-label">Resolved</div>
+                            <div class="tile-value" id="resolved-events">0</div>
+                            <div class="tile-trend">Completed</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Info Banner -->
+                <div id="filter-info-banner" class="filter-info-banner hidden">
+                    <span id="filter-info-text"></span>
+                    <button class="clear-filters-btn" onclick="clearFilters()">Clear Filters</button>
+                </div>
+
+                <!-- Events Widget -->
+                <div class="dashboard-widget full">
+                    <div class="widget-header">
+                        <h3>Event Management</h3>
+                        <div class="widget-actions">
+                            <button class="btn btn-primary" onclick="showCreateEventModal()">+ Create Event</button>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <!-- Filters Bar -->
+                        <div class="events-filters">
+                            <div class="filter-group">
                     <select id="filter-status" onchange="filterEvents()">
                         <option value="">All Statuses</option>
                         <option value="new">New</option>
@@ -72,16 +134,14 @@
                         <option value="medium">Medium</option>
                         <option value="low">Low</option>
                     </select>
-                </div>
-            </div>
-            <div class="actions-right">
-                <input type="text" id="search-box" placeholder="Search events..." onkeyup="filterEvents()">
-            </div>
-        </div>
+                            </div>
+                            <div class="search-box-container">
+                                <input type="text" id="search-box" placeholder="Search events..." onkeyup="filterEvents()">
+                            </div>
+                        </div>
 
-        <!-- Events Table -->
-        <div class="section">
-            <div class="table-container">
+                        <!-- Events Table -->
+                        <div class="table-container">
                 <table class="events-table">
                     <thead>
                         <tr>
@@ -101,7 +161,10 @@
                             <td colspan="9" class="no-data">No events found</td>
                         </tr>
                     </tbody>
-                </table>
+                        </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

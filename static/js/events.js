@@ -34,12 +34,23 @@ socket.on('event_deleted', (data) => {
 // Update connection status indicator
 function updateConnectionStatus(connected) {
     const statusEl = document.getElementById('connection-status');
+    const dotEl = document.getElementById('connection-dot');
+    const badgeEl = statusEl.parentElement;
+
     if (connected) {
-        statusEl.textContent = '● Connected';
-        statusEl.style.color = '#10b981';
+        statusEl.textContent = 'Connected';
+        if (dotEl) dotEl.style.background = '#00A651';
+        if (badgeEl) {
+            badgeEl.style.background = '#E8F5E9';
+            badgeEl.style.color = '#00A651';
+        }
     } else {
-        statusEl.textContent = '● Disconnected';
-        statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Disconnected';
+        if (dotEl) dotEl.style.background = '#E53935';
+        if (badgeEl) {
+            badgeEl.style.background = '#FFEBEE';
+            badgeEl.style.color = '#E53935';
+        }
     }
 }
 
